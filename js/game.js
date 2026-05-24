@@ -3,6 +3,7 @@ import { addScore, renderLeaderboard } from './leaderboard.js';
 import { attachDigitInput, focusDigitInput } from './digit-input.js';
 
 const MAX_WRONG = 3;
+const DIGIT_TIME_SEC = 30;
 
 export function createGame(rootEl) {
   let playerName = '';
@@ -11,6 +12,8 @@ export function createGame(rootEl) {
   let wrongCount = 0;
   let typedDigits = '';
   let phase = 'name'; // name | playing | gameover | win
+  let digitTimerId = null;
+  let timeRemaining = DIGIT_TIME_SEC;
 
   rootEl.innerHTML = `
     <div class="app">
@@ -34,17 +37,13 @@ export function createGame(rootEl) {
 
       <section id="screen-game" class="screen hidden">
         <div class="hud">
-          <div class="hud-item">
-            <span class="hud-label">Player</span>
-            <span id="hud-name" class="hud-value"></span>
-          </div>
-          <div class="hud-item">
-            <span class="hud-label">Progress</span>
-            <span id="hud-progress" class="hud-value">0 / ${TOTAL_DIGITS}</span>
-          </div>
           <div class="hud-item hud-strikes">
             <span class="hud-label">Wrong</span>
             <span id="hud-strikes" class="hud-value strikes">${renderStrikes(0)}</span>
+          </div>
+          <div class="hud-item hud-timer">
+            <span class="hud-label">Time</span>
+            <span id="hud-timer" class="hud-value timer">${DIGIT_TIME_SEC}s</span>
           </div>
         </div>
 
@@ -62,10 +61,6 @@ export function createGame(rootEl) {
             aria-label="Enter the next digit of pi"
           />
         </div>
-
-        <p class="hint">Tap the digits area — use the number row on your keyboard (works with Hebrew keyboard too)</p>
-
-        <div id="feedback" class="feedback" aria-live="assertive"></div>
       </section>
 
       <section id="screen-result" class="screen hidden">
@@ -87,13 +82,11 @@ export function createGame(rootEl) {
     screenResult: rootEl.querySelector('#screen-result'),
     nameInput: rootEl.querySelector('#player-name'),
     btnStart: rootEl.querySelector('#btn-start'),
-    hudName: rootEl.querySelector('#hud-name'),
-    hudProgress: rootEl.querySelector('#hud-progress'),
     hudStrikes: rootEl.querySelector('#hud-strikes'),
+    hudTimer: rootEl.querySelector('#hud-timer'),
     typedDigits: rootEl.querySelector('#typed-digits'),
     digitInput: rootEl.querySelector('#digit-input'),
     piDisplay: rootEl.querySelector('#pi-display'),
-    feedback: rootEl.querySelector('#feedback'),
     resultMessage: rootEl.querySelector('#result-message'),
     finalScore: rootEl.querySelector('#final-score'),
     btnPlayAgain: rootEl.querySelector('#btn-play-again'),
@@ -128,13 +121,11 @@ export function createGame(rootEl) {
     phase = 'playing';
 
     showScreen('game');
-    els.hudName.textContent = playerName;
     updateHud();
     els.typedDigits.textContent = '';
-    els.feedback.textContent = '';
-    els.feedback.className = 'feedback';
 
     focusDigitInput(els.digitInput);
+    startDigitTimer();
   }
 
   function onDigit(digit) {
@@ -145,27 +136,73 @@ export function createGame(rootEl) {
       position++;
       score++;
       els.typedDigits.textContent = typedDigits;
-      flashFeedback('correct', '✓');
       updateHud();
 
       if (score >= TOTAL_DIGITS) {
         endGame(true);
+      } else {
+        startDigitTimer();
       }
     } else {
       wrongCount++;
       updateHud();
-      flashFeedback('wrong', '✗ Wrong!');
 
       if (wrongCount >= MAX_WRONG) {
         endGame(false);
+      } else {
+        startDigitTimer();
       }
     }
 
     focusDigitInput(els.digitInput);
   }
 
+  function startDigitTimer() {
+    stopDigitTimer();
+    timeRemaining = DIGIT_TIME_SEC;
+    updateTimerHud();
+
+    digitTimerId = setInterval(() => {
+      timeRemaining--;
+      updateTimerHud();
+
+      if (timeRemaining <= 0) {
+        onDigitTimeout();
+      }
+    }, 1000);
+  }
+
+  function stopDigitTimer() {
+    if (digitTimerId !== null) {
+      clearInterval(digitTimerId);
+      digitTimerId = null;
+    }
+  }
+
+  function onDigitTimeout() {
+    if (phase !== 'playing') return;
+
+    wrongCount++;
+    updateHud();
+
+    if (wrongCount >= MAX_WRONG) {
+      endGame(false);
+      return;
+    }
+
+    startDigitTimer();
+    focusDigitInput(els.digitInput);
+  }
+
+  function updateTimerHud() {
+    els.hudTimer.textContent = `${timeRemaining}s`;
+    els.hudTimer.classList.toggle('timer-low', timeRemaining <= 10);
+    els.hudTimer.classList.toggle('timer-critical', timeRemaining <= 5);
+  }
+
   async function endGame(won) {
     phase = won ? 'win' : 'gameover';
+    stopDigitTimer();
     els.digitInput.blur();
 
     await addScore(playerName, score);
@@ -181,6 +218,7 @@ export function createGame(rootEl) {
   }
 
   function resetToName() {
+    stopDigitTimer();
     phase = 'name';
     els.nameInput.value = playerName;
     els.btnStart.disabled = playerName.length === 0;
@@ -189,13 +227,7 @@ export function createGame(rootEl) {
   }
 
   function updateHud() {
-    els.hudProgress.textContent = `${score} / ${TOTAL_DIGITS}`;
     els.hudStrikes.innerHTML = renderStrikes(wrongCount);
-  }
-
-  function flashFeedback(type, text) {
-    els.feedback.textContent = text;
-    els.feedback.className = `feedback feedback-${type}`;
   }
 
   function showScreen(name) {
