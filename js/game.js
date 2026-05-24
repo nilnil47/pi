@@ -164,12 +164,12 @@ export function createGame(rootEl) {
     focusDigitInput(els.digitInput);
   }
 
-  function endGame(won) {
+  async function endGame(won) {
     phase = won ? 'win' : 'gameover';
     els.digitInput.blur();
 
-    addScore(playerName, score);
-    renderLeaderboard(els.leaderboard);
+    await addScore(playerName, score);
+    await renderLeaderboard(els.leaderboard);
 
     els.finalScore.textContent = score;
     els.resultMessage.textContent = won
