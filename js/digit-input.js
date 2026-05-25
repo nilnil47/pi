@@ -63,8 +63,6 @@ export function attachDigitInput(inputEl, onDigit) {
 
   inputEl.addEventListener('paste', (e) => {
     e.preventDefault();
-    const text = e.clipboardData?.getData('text') ?? '';
-    handleValue(text);
   });
 }
 
