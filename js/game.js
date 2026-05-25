@@ -4,6 +4,7 @@ import { attachDigitInput, focusDigitInput } from './digit-input.js';
 
 const MAX_WRONG = 3;
 const DIGIT_TIME_SEC = 30;
+const MAX_NAME_LENGTH = 10;
 
 export function createGame(rootEl) {
   let playerName = '';
@@ -28,9 +29,9 @@ export function createGame(rootEl) {
           id="player-name"
           type="text"
           class="text-input"
-          placeholder="Enter your name"
+          placeholder="Enter your name (max 10)"
           autocomplete="name"
-          maxlength="30"
+          maxlength="10"
         />
         <button id="btn-start" class="btn btn-primary" disabled>Start Game</button>
       </section>
@@ -111,7 +112,7 @@ export function createGame(rootEl) {
   attachDigitInput(els.digitInput, onDigit);
 
   function startGame() {
-    playerName = els.nameInput.value.trim();
+    playerName = els.nameInput.value.trim().slice(0, MAX_NAME_LENGTH);
     if (!playerName) return;
 
     position = 0;

@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'pi-quiz-leaderboard';
 const TABLE = 'leaderboard';
+const MAX_NAME_LENGTH = 10;
 
 let supabaseClient = null;
 
@@ -71,7 +72,7 @@ export async function loadLeaderboard() {
 }
 
 export async function addScore(name, score) {
-  const trimmed = name.trim();
+  const trimmed = name.trim().slice(0, MAX_NAME_LENGTH);
   if (!trimmed) return loadLeaderboard();
 
   const entry = {
