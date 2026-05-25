@@ -152,20 +152,24 @@ body {
   margin-top: 0.15rem;
 }
 
-.strikes {
+.lives {
   display: flex;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
-.strike {
-  color: var(--surface-2);
-  font-size: 0.85rem;
-  transition: color 0.2s;
+.life {
+  font-size: 1rem;
+  transition: color 0.2s, opacity 0.2s;
 }
 
-.strike-used {
+.life-remaining {
   color: var(--wrong);
+}
+
+.life-lost {
+  color: var(--surface-2);
+  opacity: 0.35;
 }
 
 .timer {

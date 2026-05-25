@@ -2,7 +2,7 @@ import { getExpectedDigit, isCorrectDigit, TOTAL_DIGITS } from './pi-digits.js';
 import { addScore, renderLeaderboard } from './leaderboard.js';
 import { attachDigitInput, focusDigitInput } from './digit-input.js';
 
-const MAX_WRONG = 3;
+const MAX_LIVES = 3;
 const DIGIT_TIME_SEC = 30;
 const MAX_NAME_LENGTH = 10;
 
@@ -10,7 +10,7 @@ export function createGame(rootEl) {
   let playerName = '';
   let position = 0;
   let score = 0;
-  let wrongCount = 0;
+  let livesRemaining = MAX_LIVES;
   let typedDigits = '';
   let phase = 'name'; // name | playing | gameover | win
   let digitTimerId = null;
@@ -38,9 +38,9 @@ export function createGame(rootEl) {
 
       <section id="screen-game" class="screen hidden">
         <div class="hud">
-          <div class="hud-item hud-strikes">
-            <span class="hud-label">Wrong</span>
-            <span id="hud-strikes" class="hud-value strikes">${renderStrikes(0)}</span>
+          <div class="hud-item hud-lives">
+            <span class="hud-label">Lives</span>
+            <span id="hud-lives" class="hud-value lives">${renderLives(MAX_LIVES)}</span>
           </div>
           <div class="hud-item hud-timer">
             <span class="hud-label">Time</span>
@@ -83,7 +83,7 @@ export function createGame(rootEl) {
     screenResult: rootEl.querySelector('#screen-result'),
     nameInput: rootEl.querySelector('#player-name'),
     btnStart: rootEl.querySelector('#btn-start'),
-    hudStrikes: rootEl.querySelector('#hud-strikes'),
+    hudLives: rootEl.querySelector('#hud-lives'),
     hudTimer: rootEl.querySelector('#hud-timer'),
     typedDigits: rootEl.querySelector('#typed-digits'),
     digitInput: rootEl.querySelector('#digit-input'),
@@ -117,7 +117,7 @@ export function createGame(rootEl) {
 
     position = 0;
     score = 0;
-    wrongCount = 0;
+    livesRemaining = MAX_LIVES;
     typedDigits = '';
     phase = 'playing';
 
@@ -145,12 +145,8 @@ export function createGame(rootEl) {
         startDigitTimer();
       }
     } else {
-      wrongCount++;
-      updateHud();
-
-      if (wrongCount >= MAX_WRONG) {
-        endGame(false);
-      } else {
+      loseLife();
+      if (phase === 'playing') {
         startDigitTimer();
       }
     }
@@ -183,13 +179,8 @@ export function createGame(rootEl) {
   function onDigitTimeout() {
     if (phase !== 'playing') return;
 
-    wrongCount++;
-    updateHud();
-
-    if (wrongCount >= MAX_WRONG) {
-      endGame(false);
-      return;
-    }
+    loseLife();
+    if (phase !== 'playing') return;
 
     startDigitTimer();
     focusDigitInput(els.digitInput);
@@ -212,7 +203,7 @@ export function createGame(rootEl) {
     els.finalScore.textContent = score;
     els.resultMessage.textContent = won
       ? '🎉 Amazing! You completed all 1000 digits!'
-      : `Game over, ${playerName}. You ran out of guesses.`;
+      : `Game over, ${playerName}. You're out of lives.`;
     els.resultMessage.className = won ? 'result-message win' : 'result-message lose';
 
     showScreen('result');
@@ -227,8 +218,19 @@ export function createGame(rootEl) {
     els.nameInput.focus();
   }
 
+  function loseLife() {
+    if (phase !== 'playing') return;
+
+    livesRemaining--;
+    updateHud();
+
+    if (livesRemaining <= 0) {
+      endGame(false);
+    }
+  }
+
   function updateHud() {
-    els.hudStrikes.innerHTML = renderStrikes(wrongCount);
+    els.hudLives.innerHTML = renderLives(livesRemaining);
   }
 
   function showScreen(name) {
@@ -240,8 +242,8 @@ export function createGame(rootEl) {
   els.nameInput.focus();
 }
 
-function renderStrikes(count) {
-  return Array.from({ length: MAX_WRONG }, (_, i) =>
-    `<span class="strike ${i < count ? 'strike-used' : ''}">●</span>`
+function renderLives(livesRemaining) {
+  return Array.from({ length: MAX_LIVES }, (_, i) =>
+    `<span class="life ${i < livesRemaining ? 'life-remaining' : 'life-lost'}">♥</span>`
   ).join('');
 }
