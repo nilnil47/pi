@@ -37,14 +37,28 @@ export function extractDigits(text) {
  * Attach digit input handling to a hidden input element.
  * Calls onDigit(digit) for each valid digit entered.
  */
+const BLOCKED_INPUT_TYPES = new Set([
+  'insertFromPaste',
+  'insertFromDrop',
+  'insertFromYank',
+]);
+
 export function attachDigitInput(inputEl, onDigit) {
   function handleValue(raw) {
     const digits = extractDigits(raw);
     inputEl.value = '';
-    for (const d of digits) {
-      onDigit(d);
-    }
+
+    // Mobile often skips paste events and inserts via input instead.
+    if (digits.length !== 1) return;
+
+    onDigit(digits[0]);
   }
+
+  inputEl.addEventListener('beforeinput', (e) => {
+    if (BLOCKED_INPUT_TYPES.has(e.inputType)) {
+      e.preventDefault();
+    }
+  });
 
   inputEl.addEventListener('input', () => handleValue(inputEl.value));
 

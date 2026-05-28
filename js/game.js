@@ -202,7 +202,7 @@ export function createGame(rootEl) {
 
     els.finalScore.textContent = score;
     els.resultMessage.textContent = won
-      ? '🎉 Amazing! You completed all 1000 digits!'
+      ? `🎉 Amazing! You completed all ${TOTAL_DIGITS} digits!`
       : `Game over, ${playerName}. You're out of lives.`;
     els.resultMessage.className = won ? 'result-message win' : 'result-message lose';
 
