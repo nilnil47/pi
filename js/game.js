@@ -2,7 +2,7 @@ import { getExpectedDigit, isCorrectDigit, TOTAL_DIGITS } from './pi-digits.js';
 import { addScore, renderLeaderboard } from './leaderboard.js';
 import { attachDigitInput, focusDigitInput } from './digit-input.js';
 
-const MAX_LIVES = 3;
+const MAX_LIVES = 5;
 const DIGIT_TIME_SEC = 30;
 const MAX_NAME_LENGTH = 10;
 
